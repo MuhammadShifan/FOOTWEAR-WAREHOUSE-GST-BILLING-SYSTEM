@@ -1,0 +1,20 @@
+{
+  "name": "as-marketing-footwear-billing",
+  "version": "1.0.0",
+  "description": "Footwear Warehouse Inventory and GST Billing System for AS MARKETING - MERN Stack",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "install-all": "cd server && npm install && cd ../client && npm install",
+    "seed": "cd server && npm run seed"
+  },
+  "keywords": [
+    "mern",
+    "footwear-warehouse",
+    "gst-invoice",
+    "inventory-management",
+    "as-marketing"
+  ],
+  "author": "AS MARKETING",
+  "license": "ISC"
+}
