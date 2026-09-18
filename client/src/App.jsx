@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // Pudhusa add panna line
 import Header from './components/Header';
 import Inventory from './components/Inventory';
 import Billing from './components/Billing';
 import InvoiceList from './components/InvoiceList';
 import InvoiceModal from './components/InvoiceModal';
 import { inventoryApi, invoiceApi } from './services/api';
+
+// Inga unga backend Render URL-ah set panniyachu
+axios.defaults.baseURL = 'https://footwear-api-sf29.onrender.com';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('inventory');
