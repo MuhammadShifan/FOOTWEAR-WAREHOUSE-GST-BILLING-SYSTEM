@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+// Render Backend URL updated here
+const API_BASE = 'https://footwear-api-sf29.onrender.com/api';
 
 export const inventoryApi = {
   getAll: (params) => axios.get(`${API_BASE}/inventory`, { params }),
