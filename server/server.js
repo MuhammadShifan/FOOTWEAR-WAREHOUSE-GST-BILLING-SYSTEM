@@ -35,8 +35,8 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(` [AS MARKETING] Footwear Warehouse Server Running on Port ${PORT}`);
-  console.log(` Health Check: http://localhost:${PORT}/api/health`);
-  console.log(` Inventory API: http://localhost:${PORT}/api/inventory`);
-  console.log(` Invoices API:  http://localhost:${PORT}/api/invoices`);
+  console.log(` Health Check: [https://footwear-api-sf29.onrender.com](https://footwear-api-sf29.onrender.com):${PORT}/api/health`);
+  console.log(` Inventory API: [https://footwear-api-sf29.onrender.com](https://footwear-api-sf29.onrender.com):${PORT}/api/inventory`);
+  console.log(` Invoices API:  [https://footwear-api-sf29.onrender.com](https://footwear-api-sf29.onrender.com):${PORT}/api/invoices`);
   console.log(`=======================================================`);
 });
