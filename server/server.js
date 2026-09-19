@@ -6,6 +6,7 @@ import cors from 'cors';
 import { connectDB } from './config/db.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -17,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/invoices', invoiceRoutes);
 

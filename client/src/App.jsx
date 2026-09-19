@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Pudhusa add panna line
 import Header from './components/Header';
 import Inventory from './components/Inventory';
 import Billing from './components/Billing';
 import InvoiceList from './components/InvoiceList';
 import InvoiceModal from './components/InvoiceModal';
+import AuthPage from './components/auth/AuthPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { inventoryApi, invoiceApi } from './services/api';
 
-// Inga unga backend Render URL-ah set panniyachu
-axios.defaults.baseURL = 'https://footwear-api-sf29.onrender.com';
-
-export default function App() {
+function MainApp() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('inventory');
   const [items, setItems] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -21,11 +20,16 @@ export default function App() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Initial Load
+  // Allow guest exploration mode if user chooses
+  const [guestMode, setGuestMode] = useState(false);
+
+  // Initial Load when authenticated or in guest mode
   useEffect(() => {
-    loadInventory();
-    loadInvoices();
-  }, []);
+    if (isAuthenticated || guestMode) {
+      loadInventory();
+      loadInvoices();
+    }
+  }, [isAuthenticated, guestMode]);
 
   const loadInventory = async () => {
     setLoadingItems(true);
@@ -68,6 +72,36 @@ export default function App() {
     lowStockCount: items.filter((it) => it.stockQty <= (it.minStockAlert || 10)).length,
   };
 
+  if (authLoading) {
+    return (
+      <div className="auth-loading-screen">
+        <div className="terminal-loader">
+          <div className="loader-text">[ INITIALIZING AS MARKETING SECURITY SUBSYSTEM... ]</div>
+          <div className="loader-bar"><div className="loader-bar-fill"></div></div>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in and not in guest mode, show the Authentication Page
+  if (!isAuthenticated && !guestMode) {
+    return (
+      <div className="auth-container">
+        <AuthPage onAuthSuccess={() => setGuestMode(false)} />
+        <div className="guest-mode-bar">
+          <span>Need quick preview without logging in?</span>
+          <button
+            type="button"
+            className="guest-mode-btn"
+            onClick={() => setGuestMode(true)}
+          >
+            Continue as Guest Viewer &rarr;
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Top Header & Navigation */}
@@ -75,6 +109,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         stockStats={stockStats}
+        onOpenAuth={() => setGuestMode(false)}
       />
 
       {/* Main Content Areas */}
@@ -118,5 +153,13 @@ export default function App() {
         }}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

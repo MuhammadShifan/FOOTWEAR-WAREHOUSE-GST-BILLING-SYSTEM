@@ -1,15 +1,42 @@
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 
-export default function Header({ activeTab, setActiveTab, stockStats }) {
+export default function Header({ activeTab, setActiveTab, stockStats, onOpenAuth }) {
+  const { user, isAuthenticated, logout } = useAuth();
+
   return (
     <header className="terminal-header no-print">
       <div className="ascii-title">
         <div>
           [ AS MARKETING ] - FOOTWEAR WAREHOUSE & GST BILLING SYSTEM
         </div>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span className="system-tag">GSTIN: 33APDPM1586P1ZG</span>
-          <span className="system-tag" style={{ marginLeft: '6px' }}>STATE: 33 (TN)</span>
+          <span className="system-tag">STATE: 33 (TN)</span>
+          
+          {isAuthenticated && user ? (
+            <div className="auth-user-badge">
+              <span className="user-icon">&#9679;</span>
+              <span className="user-name">{user.name || user.email}</span>
+              <span className="user-role">[{user.role?.toUpperCase() || 'USER'}]</span>
+              <button
+                type="button"
+                className="btn-logout"
+                onClick={logout}
+                title="Sign out of warehouse system"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn-header-login"
+              onClick={onOpenAuth}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
 
