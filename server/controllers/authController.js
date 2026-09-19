@@ -141,7 +141,7 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Forgot Password - Generate & Send 6-digit OTP
+// @desc    Forgot Password - Generate & Send 6-digit OTP via Nodemailer
 // @route   POST /api/auth/forgot-password
 // @access  Public
 export const forgotPassword = async (req, res) => {
@@ -163,13 +163,13 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    // Generate 6-digit OTP
+    // Generate 6-digit cryptographic OTP
     const otp = generate6DigitOtp();
 
-    // Set OTP expiration to 10 minutes from now
+    // Set OTP expiration to 10 minutes from now (600,000 ms)
     const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Save to user document
+    // Save OTP and expiration to user document
     user.resetOtp = otp;
     user.resetOtpExpire = otpExpire;
     user.isOtpVerified = false;
@@ -177,34 +177,37 @@ export const forgotPassword = async (req, res) => {
 
     // Send email with OTP via Nodemailer
     try {
-      const emailResult = await sendEmail({
+      await sendEmail({
         email: user.email,
-        subject: `AS MARKETING - ${otp} is your Password Reset OTP`,
+        subject: `AS MARKETING - ${otp} is your Password Reset Code`,
         otp,
       });
 
+      // Secure Production Response: NEVER send OTP in JSON payload
       return res.status(200).json({
         success: true,
-        message: '6-digit OTP sent to your registered email. Valid for 10 minutes.',
+        message: 'A 6-digit OTP verification code has been sent to your registered email address. It is valid for 10 minutes.',
         expiresAt: otpExpire,
-        // Include dev OTP preview if in development or console mode
-        devOtp: emailResult?.mode === 'dev_console' ? otp : undefined,
       });
     } catch (emailErr) {
       console.error('Email Dispatch Error:', emailErr);
-      // Even if SMTP fails, keep the OTP for dev testing or retry
-      return res.status(200).json({
-        success: true,
-        message: 'OTP generated. Check your email (or server log if in dev mode).',
-        expiresAt: otpExpire,
-        devOtp: otp,
+      
+      // Reset OTP fields if email delivery completely failed
+      user.resetOtp = null;
+      user.resetOtpExpire = null;
+      user.isOtpVerified = false;
+      await user.save();
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP email. Please verify email server configuration or contact the administrator.',
       });
     }
   } catch (err) {
     console.error('Forgot Password Error:', err);
     return res.status(500).json({
       success: false,
-      message: err.message || 'Server error generating OTP.',
+      message: err.message || 'Server error while processing password reset request.',
     });
   }
 };

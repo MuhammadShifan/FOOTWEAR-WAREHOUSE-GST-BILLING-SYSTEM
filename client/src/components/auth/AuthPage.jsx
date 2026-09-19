@@ -29,7 +29,6 @@ export default function AuthPage({ onAuthSuccess }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [devOtpCode, setDevOtpCode] = useState('');
 
   // 10-minute Countdown Timer Effect for OTP
   useEffect(() => {
@@ -68,7 +67,6 @@ export default function AuthPage({ onAuthSuccess }) {
     setMode(newMode);
     setErrorMsg('');
     setSuccessMsg('');
-    setDevOtpCode('');
   };
 
   // Handle Login Submit
@@ -141,10 +139,7 @@ export default function AuthPage({ onAuthSuccess }) {
     setLoading(true);
     try {
       const res = await authApi.forgotPassword({ email });
-      setSuccessMsg(res.data?.message || '6-digit OTP sent to your email.');
-      if (res.data?.devOtp) {
-        setDevOtpCode(res.data.devOtp);
-      }
+      setSuccessMsg(res.data?.message || 'A 6-digit OTP code has been sent to your email.');
       // Start 10-minute timer and cooldown
       setTimeLeft(600);
       setTimerActive(true);
@@ -233,9 +228,6 @@ export default function AuthPage({ onAuthSuccess }) {
     try {
       const res = await authApi.forgotPassword({ email });
       setSuccessMsg('A new 6-digit OTP has been sent to your email.');
-      if (res.data?.devOtp) {
-        setDevOtpCode(res.data.devOtp);
-      }
       setTimeLeft(600);
       setTimerActive(true);
       setResendCooldown(60);
@@ -343,14 +335,6 @@ export default function AuthPage({ onAuthSuccess }) {
           <div className="auth-alert auth-alert-success">
             <span className="auth-alert-icon">&#10004;</span>
             <span>{successMsg}</span>
-          </div>
-        )}
-
-        {devOtpCode && (
-          <div className="auth-alert auth-alert-info">
-            <span>
-              <strong>[DEV MODE OTP]</strong> Code: <code>{devOtpCode}</code> (Also logged to terminal)
-            </span>
           </div>
         )}
 
