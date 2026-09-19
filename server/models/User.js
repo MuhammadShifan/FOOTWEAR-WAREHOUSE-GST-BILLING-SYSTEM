@@ -31,18 +31,6 @@ const userSchema = new mongoose.Schema(
       enum: ['admin', 'manager', 'staff'],
       default: 'admin',
     },
-    resetOtp: {
-      type: String,
-      default: null,
-    },
-    resetOtpExpire: {
-      type: Date,
-      default: null,
-    },
-    isOtpVerified: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
