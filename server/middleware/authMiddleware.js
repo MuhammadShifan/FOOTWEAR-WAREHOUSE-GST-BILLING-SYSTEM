@@ -23,6 +23,18 @@ export const protect = async (req, res, next) => {
     const secret = process.env.JWT_SECRET || 'as_marketing_footwear_jwt_secret_2026';
     const decoded = jwt.verify(token, secret);
 
+    // If admin token from .env
+    if (decoded.id === 'admin') {
+      req.user = {
+        _id: 'admin',
+        name: 'Administrator',
+        email: process.env.ADMIN_EMAIL || 'admin@asmarketing.com',
+        role: 'admin',
+      };
+      return next();
+    }
+
+    // Fallback if legacy user in MongoDB exists
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       return res.status(401).json({

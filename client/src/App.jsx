@@ -20,16 +20,13 @@ function MainApp() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Allow guest exploration mode if user chooses
-  const [guestMode, setGuestMode] = useState(false);
-
-  // Initial Load when authenticated or in guest mode
+  // Initial Load when authenticated
   useEffect(() => {
-    if (isAuthenticated || guestMode) {
+    if (isAuthenticated) {
       loadInventory();
       loadInvoices();
     }
-  }, [isAuthenticated, guestMode]);
+  }, [isAuthenticated]);
 
   const loadInventory = async () => {
     setLoadingItems(true);
@@ -83,21 +80,11 @@ function MainApp() {
     );
   }
 
-  // If not logged in and not in guest mode, show the Authentication Page
-  if (!isAuthenticated && !guestMode) {
+  // If not logged in, show the Authentication Page
+  if (!isAuthenticated) {
     return (
       <div className="auth-container">
-        <AuthPage onAuthSuccess={() => setGuestMode(false)} />
-        <div className="guest-mode-bar">
-          <span>Need quick preview without logging in?</span>
-          <button
-            type="button"
-            className="guest-mode-btn"
-            onClick={() => setGuestMode(true)}
-          >
-            Continue as Guest Viewer &rarr;
-          </button>
-        </div>
+        <AuthPage />
       </div>
     );
   }
@@ -109,7 +96,6 @@ function MainApp() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         stockStats={stockStats}
-        onOpenAuth={() => setGuestMode(false)}
       />
 
       {/* Main Content Areas */}

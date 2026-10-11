@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -10,7 +9,7 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state from localStorage on app load
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
       try {
         const storedToken = localStorage.getItem('as_auth_token');
         const storedUser = localStorage.getItem('as_auth_user');
@@ -18,17 +17,6 @@ export const AuthProvider = ({ children }) => {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
-
-          // Optionally verify token freshness in background
-          try {
-            const res = await authApi.getMe();
-            if (res.data?.user) {
-              setUser(res.data.user);
-              localStorage.setItem('as_auth_user', JSON.stringify(res.data.user));
-            }
-          } catch (err) {
-            console.warn('Session verification fallback:', err.message);
-          }
         }
       } catch (err) {
         console.error('Auth initialization error:', err);
@@ -42,40 +30,47 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // Login handler
+  // Login handler using environment variables (database-based auth disabled)
   const login = async (email, password) => {
-    const res = await authApi.login({ email, password });
-    if (res.data?.success && res.data?.token) {
-      const authToken = res.data.token;
-      const authUser = res.data.user;
+    // Read admin credentials from environment variables
+    // Supports Vite (VITE_ADMIN_*) and Create React App (REACT_APP_ADMIN_*)
+    const adminEmail =
+      import.meta.env.VITE_ADMIN_EMAIL ||
+      (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_EMAIL) ||
+      '';
+    const adminPassword =
+      import.meta.env.VITE_ADMIN_PASSWORD ||
+      (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_PASSWORD) ||
+      '';
+
+    // Validate credentials against .env
+    const isEmailValid =
+      adminEmail && email.trim().toLowerCase() === adminEmail.trim().toLowerCase();
+    const isPasswordValid = adminPassword && password === adminPassword;
+
+    if (isEmailValid && isPasswordValid) {
+      const adminUser = {
+        name: 'Administrator',
+        email: adminEmail,
+        role: 'admin',
+      };
+      const authToken = 'as_admin_env_session_token';
 
       setToken(authToken);
-      setUser(authUser);
+      setUser(adminUser);
 
       localStorage.setItem('as_auth_token', authToken);
-      localStorage.setItem('as_auth_user', JSON.stringify(authUser));
+      localStorage.setItem('as_auth_user', JSON.stringify(adminUser));
 
-      return res.data;
+      return { success: true, user: adminUser, token: authToken };
     }
-    throw new Error(res.data?.message || 'Login failed');
+
+    throw new Error('Invalid credentials');
   };
 
-  // Register handler
-  const register = async (name, email, password, role = 'admin') => {
-    const res = await authApi.register({ name, email, password, role });
-    if (res.data?.success && res.data?.token) {
-      const authToken = res.data.token;
-      const authUser = res.data.user;
-
-      setToken(authToken);
-      setUser(authUser);
-
-      localStorage.setItem('as_auth_token', authToken);
-      localStorage.setItem('as_auth_user', JSON.stringify(authUser));
-
-      return res.data;
-    }
-    throw new Error(res.data?.message || 'Registration failed');
+  // Register handler (disabled)
+  const register = async () => {
+    throw new Error('Registration is currently disabled. Please sign in as admin.');
   };
 
   // Logout handler

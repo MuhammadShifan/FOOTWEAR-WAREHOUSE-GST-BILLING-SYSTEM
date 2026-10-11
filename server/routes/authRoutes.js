@@ -1,6 +1,5 @@
 import express from 'express';
 import {
-  register,
   login,
   getMe,
 } from '../controllers/authController.js';
@@ -8,11 +7,10 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public authentication routes
-router.post('/register', register);
+// Public authentication routes (Registration disabled)
 router.post('/login', login);
 
-// Protected routes
+// Protected profile routes
 router.get('/me', protect, getMe);
 
 export default router;

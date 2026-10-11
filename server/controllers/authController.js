@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 
 /**
  * Generate JWT token helper
@@ -10,76 +9,14 @@ const generateToken = (id) => {
   return jwt.sign({ id }, secret, { expiresIn });
 };
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
-export const register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    // Basic validation
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide full name, email, and password.',
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters long.',
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'An account with this email address already exists.',
-      });
-    }
-
-    // Create user
-    const user = await User.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      role: role || 'admin',
-    });
-
-    const token = generateToken(user._id);
-
-    return res.status(201).json({
-      success: true,
-      message: 'Account registered successfully.',
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (err) {
-    console.error('Register Error:', err);
-    return res.status(500).json({
-      success: false,
-      message: err.message || 'Server error during registration.',
-    });
-  }
-};
-
-// @desc    Authenticate user & login
+// @desc    Authenticate admin user & login via .env credentials
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
+    // Basic validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -87,36 +24,32 @@ export const login = async (req, res) => {
       });
     }
 
-    // Find user by email and explicitly include password field
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
-    if (!user) {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@asmarketing.com';
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    // Direct comparison with environment variables
+    const isEmailMatch = email.toLowerCase().trim() === adminEmail.toLowerCase().trim();
+    const isPasswordMatch = password === adminPassword;
+
+    if (!isEmailMatch || !isPasswordMatch) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.',
       });
     }
 
-    // Verify password match using bcrypt
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
-
-    const token = generateToken(user._id);
+    // Generate JWT token
+    const token = generateToken('admin');
 
     return res.status(200).json({
       success: true,
       message: 'Logged in successfully.',
       token,
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
+        _id: 'admin',
+        name: 'Administrator',
+        email: adminEmail,
+        role: 'admin',
       },
     });
   } catch (err) {
@@ -133,8 +66,7 @@ export const login = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (!user) {
+    if (!req.user) {
       return res.status(404).json({
         success: false,
         message: 'User profile not found.',
@@ -143,7 +75,7 @@ export const getMe = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user,
+      user: req.user,
     });
   } catch (err) {
     console.error('Get Profile Error:', err);

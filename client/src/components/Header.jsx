@@ -12,8 +12,8 @@ export default function Header({ activeTab, setActiveTab, stockStats, onOpenAuth
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span className="system-tag">GSTIN: 33APDPM1586P1ZG</span>
-          <span className="system-tag">STATE: 33 (TN)</span>
-          
+          <span className="system-tag">STATE: 49 (TN)</span>
+
           {isAuthenticated && user ? (
             <div className="auth-user-badge">
               <span className="user-icon">&#9679;</span>
@@ -51,7 +51,7 @@ export default function Header({ activeTab, setActiveTab, stockStats, onOpenAuth
           TOTAL STOCK PAIRS: <strong>{stockStats?.totalPairs || 0}</strong>
         </div>
         <div className="meta-item">
-          LOW STOCK ALERTS: 
+          LOW STOCK ALERTS:
           <strong style={{ color: stockStats?.lowStockCount > 0 ? '#f87171' : '#34d399', marginLeft: '4px' }}>
             {stockStats?.lowStockCount || 0}
           </strong>
