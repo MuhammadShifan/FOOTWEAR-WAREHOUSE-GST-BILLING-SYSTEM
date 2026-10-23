@@ -1,15 +1,21 @@
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
+import User from '../models/User.js';
 
 /**
  * Generate JWT token helper
  */
 const generateToken = (id) => {
-  const secret = process.env.JWT_SECRET || 'as_marketing_footwear_jwt_secret_2026';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured on the server.');
+  }
   const expiresIn = process.env.JWT_EXPIRE || '7d';
   return jwt.sign({ id }, secret, { expiresIn });
 };
 
-// @desc    Authenticate admin user & login via .env credentials
+// @desc    Authenticate user & login (supports admin .env credentials and registered database users)
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (req, res) => {
@@ -24,14 +30,55 @@ export const login = async (req, res) => {
       });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@asmarketing.com';
+    const normalizedEmail = email.toLowerCase().trim();
+    let authenticatedUser = null;
+
+    // 1. Verify against server environment administrator credentials
+    const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // Direct comparison with environment variables
-    const isEmailMatch = email.toLowerCase().trim() === adminEmail.toLowerCase().trim();
-    const isPasswordMatch = password === adminPassword;
+    if (
+      adminEmail &&
+      adminPassword &&
+      normalizedEmail === adminEmail.toLowerCase().trim()
+    ) {
+      const isPasswordMatch = adminPassword.startsWith('$2')
+        ? await bcrypt.compare(password, adminPassword)
+        : password === adminPassword;
 
-    if (!isEmailMatch || !isPasswordMatch) {
+      if (isPasswordMatch) {
+        authenticatedUser = {
+          _id: 'admin',
+          name: 'Administrator',
+          email: adminEmail,
+          role: 'admin',
+        };
+      }
+    }
+
+    // 2. If not matched with env admin, verify against MongoDB database users (if DB connected)
+    if (!authenticatedUser && mongoose.connection.readyState === 1) {
+      try {
+        const dbUser = await User.findOne({ email: normalizedEmail }).select('+password');
+        if (dbUser) {
+          const isDbPasswordMatch = await dbUser.matchPassword(password);
+          if (isDbPasswordMatch) {
+            authenticatedUser = {
+              _id: dbUser._id.toString(),
+              name: dbUser.name,
+              email: dbUser.email,
+              role: dbUser.role || 'admin',
+            };
+          }
+        }
+      } catch (dbErr) {
+        // Fallback gracefully if database is in offline / in-memory mode
+        console.warn('[AUTH WARNING] MongoDB user verification skipped:', dbErr.message);
+      }
+    }
+
+    // If neither matched, reject login
+    if (!authenticatedUser) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.',
@@ -39,24 +86,19 @@ export const login = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = generateToken('admin');
+    const token = generateToken(authenticatedUser._id);
 
     return res.status(200).json({
       success: true,
       message: 'Logged in successfully.',
       token,
-      user: {
-        _id: 'admin',
-        name: 'Administrator',
-        email: adminEmail,
-        role: 'admin',
-      },
+      user: authenticatedUser,
     });
   } catch (err) {
-    console.error('Login Error:', err);
+    console.error('Login Error:', err.message);
     return res.status(500).json({
       success: false,
-      message: err.message || 'Server error during login.',
+      message: 'Server error during login.',
     });
   }
 };
@@ -78,10 +120,11 @@ export const getMe = async (req, res) => {
       user: req.user,
     });
   } catch (err) {
-    console.error('Get Profile Error:', err);
+    console.error('Get Profile Error:', err.message);
     return res.status(500).json({
       success: false,
-      message: err.message || 'Server error retrieving profile.',
+      message: 'Server error retrieving profile.',
     });
   }
 };
+

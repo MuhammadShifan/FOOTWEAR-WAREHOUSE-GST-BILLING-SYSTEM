@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -30,42 +31,22 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // Login handler using environment variables (database-based auth disabled)
+  // Login handler via backend API
   const login = async (email, password) => {
-    // Read admin credentials from environment variables
-    // Supports Vite (VITE_ADMIN_*) and Create React App (REACT_APP_ADMIN_*)
-    const adminEmail =
-      import.meta.env.VITE_ADMIN_EMAIL ||
-      (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_EMAIL) ||
-      '';
-    const adminPassword =
-      import.meta.env.VITE_ADMIN_PASSWORD ||
-      (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_PASSWORD) ||
-      '';
-
-    // Validate credentials against .env
-    const isEmailValid =
-      adminEmail && email.trim().toLowerCase() === adminEmail.trim().toLowerCase();
-    const isPasswordValid = adminPassword && password === adminPassword;
-
-    if (isEmailValid && isPasswordValid) {
-      const adminUser = {
-        name: 'Administrator',
-        email: adminEmail,
-        role: 'admin',
-      };
-      const authToken = 'as_admin_env_session_token';
+    const res = await authApi.login({ email, password });
+    if (res.data?.success && res.data?.token) {
+      const authToken = res.data.token;
+      const authUser = res.data.user;
 
       setToken(authToken);
-      setUser(adminUser);
+      setUser(authUser);
 
       localStorage.setItem('as_auth_token', authToken);
-      localStorage.setItem('as_auth_user', JSON.stringify(adminUser));
+      localStorage.setItem('as_auth_user', JSON.stringify(authUser));
 
-      return { success: true, user: adminUser, token: authToken };
+      return res.data;
     }
-
-    throw new Error('Invalid credentials');
+    throw new Error(res.data?.message || 'Login failed');
   };
 
   // Register handler (disabled)

@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: '[https://footwear-api-sf29.onrender.com](https://footwear-api-sf29.onrender.com):5001',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:5001',
         changeOrigin: true,
       },
     },

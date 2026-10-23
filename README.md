@@ -585,30 +585,40 @@ Located in [`server/utils/numberToWords.js`](file:///Users/proplanet/Documents/b
 
 ### 8.2 Environment Configuration
 
-Create a `.env` file in the `server/` directory:
+Create a `.env` file in the `server/` directory (or copy from `server/.env.example`):
 
 ```env
 # Server Port
 PORT=5001
+NODE_ENV=development
 
 # MongoDB Connection String
 MONGO_URI=mongodb://localhost:27017/as_marketing_footwear
 
-# JWT Authentication
-JWT_SECRET=as_marketing_footwear_jwt_secret_super_secure_key_2026
+# JWT Authentication (generate a secure 32+ character random key)
+JWT_SECRET=your_super_secret_jwt_key_at_least_32_characters_long
 JWT_EXPIRE=7d
 
+# Initial Administrator Credentials (BACKEND ONLY)
+ADMIN_EMAIL=admin@asmarketing.com
+ADMIN_PASSWORD=your_secure_admin_password_here
+
 # Optional SMTP Email Configuration (Nodemailer)
-EMAIL_USER=asmarketingtnj@gmail.com
-EMAIL_PASS=your_16_character_app_password
 EMAIL_SERVICE=gmail
+EMAIL_USER=your_warehouse_email@gmail.com
+EMAIL_PASS=your_16_character_app_password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_FROM="AS MARKETING Security" <your_warehouse_email@gmail.com>
 ```
 
-*(Optional)* Create a `.env` file in the `client/` directory if connecting to a remote backend:
+*(Optional)* Create a `.env` file in the `client/` directory (or copy from `client/.env.example`):
 
 ```env
+# Backend API Base URL (public, client-accessible only)
 VITE_API_URL=http://localhost:5001/api
 ```
+
 
 ---
 

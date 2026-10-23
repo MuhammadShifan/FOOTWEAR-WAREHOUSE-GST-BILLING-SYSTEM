@@ -27,34 +27,17 @@ export default function AuthPage({ onAuthSuccess }) {
 
     setLoading(true);
     try {
-      // Read admin credentials from environment variables
-      // Supports Vite (VITE_ADMIN_*) and Create React App (REACT_APP_ADMIN_*)
-      const adminEmail =
-        import.meta.env.VITE_ADMIN_EMAIL ||
-        (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_EMAIL) ||
-        '';
-      const adminPassword =
-        import.meta.env.VITE_ADMIN_PASSWORD ||
-        (typeof process !== 'undefined' && process.env?.REACT_APP_ADMIN_PASSWORD) ||
-        '';
-
-      // Validation logic: direct comparison against .env
-      const isEmailValid =
-        adminEmail && email.trim().toLowerCase() === adminEmail.trim().toLowerCase();
-      const isPasswordValid = adminPassword && password === adminPassword;
-
-      if (isEmailValid && isPasswordValid) {
-        // Authenticate in session via AuthContext
-        if (login) {
-          await login(email, password);
-        }
-        setSuccessMsg('Login successful! Redirecting...');
-        if (onAuthSuccess) onAuthSuccess();
-      } else {
-        throw new Error('Invalid credentials');
+      if (login) {
+        await login(email, password);
       }
+      setSuccessMsg('Login successful! Redirecting...');
+      if (onAuthSuccess) onAuthSuccess();
     } catch (err) {
-      setErrorMsg(err.message || 'Invalid credentials');
+      setErrorMsg(
+        err.response?.data?.message ||
+        err.message ||
+        'Invalid credentials. Please verify your email and password.'
+      );
     } finally {
       setLoading(false);
     }
